@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050307">
+<title>Love in 20 Languages ❤️</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#050307;color:#ffe5e8}
+body{
+min-height:100vh;min-height:100dvh;
+font-family:system-ui,sans-serif;
+display:flex;flex-direction:column;align-items:center;
+padding:24px 10px 22px;overflow-x:hidden;
+background:radial-gradient(ellipse at 50% 38%,#21070f,#0b050a 43%,#030204);
+}
+.corner-heart{
+position:fixed;right:17px;top:12px;font-size:24px;
+color:#ff334f;filter:drop-shadow(0 0 9px #ff254c);
+animation:pulse 1.7s infinite
+}
+h1{
+margin:18px 0 7px;text-align:center;
+font-size:clamp(25px,6vw,42px);
+color:#ff536b;text-shadow:0 0 8px #ff1744,0 0 26px #9d102e
+}
+.subtitle{
+margin:0 0 13px;color:#d69aa7;text-align:center;
+font-size:13px;letter-spacing:.14em;text-transform:uppercase
+}
+.heart-wrap{
+width:min(94vw,540px);height:min(105vw,540px);
+min-height:300px;max-height:540px;position:relative
+}
+canvas{width:100%;height:100%;display:block}
+.caption{
+opacity:0;transform:translateY(10px);text-align:center;
+margin:8px 0 0;color:#ffd6de;font-size:clamp(16px,4vw,22px);
+text-shadow:0 0 12px #ff3657;
+transition:opacity 1.2s,transform 1.2s
+}
+.caption.show{opacity:1;transform:translateY(0)}
+.small{color:#80515d;text-align:center;font-size:11px;margin-top:10px}
+@keyframes pulse{
+0%,100%{transform:scale(1)}
+50%{transform:scale(1.15)}
+}
+@media(prefers-reduced-motion:reduce){
+.corner-heart{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="corner-heart">♥</div>
+<h1>Love in 20 Languages</h1>
+<p class="subtitle">One heart · a thousand ways to say it</p>
+<div class="heart-wrap">
+<canvas id="heart"></canvas>
+</div>
+<p id="caption" class="caption">One feeling, 20 languages. ❤️</p>
+<p class="small">MADE WITH LOVE · ALWAYS YOU</p>
+
+<script>
+(() => {
+const canvas=document.getElementById('heart');
+const ctx=canvas.getContext('2d');
+const caption=document.getElementById('caption');
+
+const phrases=[
+"I love you","بحبك","Je t'aime","Te amo","Ti amo",
+"Ich liebe dich","Eu te amo","Seni seviyorum",
+"دوستت دارم","मैं तुमसे प्यार करता हूँ",
+"میں تم سے محبت کرتا ہوں","我爱你","愛してる","사랑해",
+"Я тебя люблю","Σ' αγαπώ","Ik hou van jou",
+"Aku cinta kamu","Nakupenda","আমি তোমাকে ভালোবাসি",
+"I love you ♥","بحبك أوي","Mon amour","Mi amor",
+"Amore mio","Te quiero","Meu amor","Canım","عشق","愛"
+];
+
+let points=[];
+let started=false;
+let startTime=0;
+let dpr=1,W=0,H=0;
+
+function insideHeart(x,y){
+const yy=-y;
+return Math.pow(x*x+yy*yy-1,3)
+-x*x*yy*yy*yy<=0;
+}
+
+function buildHeartPoints(){
+points=[];
+const scale=Math.min(W*.39,H*.39);
+const cx=W/2,cy=H*.48;
+const step=W<380?13:15;
+
+for(let y=-1.28;y<=1.15;y+=step/scale){
+for(let x=-1.22;x<=1.22;x+=step/scale){
+if(insideHeart(x,y)){
+points.push({x:cx+x*scale,y:cy-y*scale});
+}
+}
+}
+
+// Distribute phrases throughout the heart.
+for(let i=points.length-1;i>0;i--){
+const j=(i*37+17)%(i+1);
+[points[i],points[j]]=[points[j],points[i]];
+}
+}
+
+function resize(){
+const rect=canvas.getBoundingClientRect();
+dpr=Math.min(window.devicePixelRatio||1,2);
+W=Math.max(260,rect.width);
+H=Math.max(300,rect.height);
+canvas.width=Math.round(W*dpr);
+canvas.height=Math.round(H*dpr);
+ctx.setTransform(dpr,0,0,dpr,0,0);
+buildHeartPoints();
+
+if(!started){
+started=true;
+startTime=performance.now();
+requestAnimationFrame(draw);
+}
+}
+
+function draw(now){
+ctx.clearRect(0,0,W,H);
+const elapsed=(now-startTime)/1000;
+const visible=Math.min(points.length,Math.floor(elapsed*19));
+
+ctx.textAlign='center';
+ctx.textBaseline='middle';
+
+for(let i=0;i<visible;i++){
+const p=points[i];
+const phrase=phrases[i%phrases.length];
+const age=Math.min(1,Math.max(0,(elapsed-i/19)*2.6));
+const size=W<380?9.3:10.5;
+
+ctx.font=`${i%7===0?600:500} ${size}px system-ui,sans-serif`;
+ctx.globalAlpha=age;
+ctx.fillStyle=[
+'#ff6b78','#ff9b65','#ffd0d7','#e94864'
+][i%4];
+ctx.shadowColor='#ff244e';
+ctx.shadowBlur=age>.8?5:1;
+ctx.fillText(phrase,p.x,p.y,W<380?82:98);
+}
+
+ctx.globalAlpha=1;
+ctx.shadowBlur=0;
+
+if(visible<points.length){
+requestAnimationFrame(draw);
+}else{
+caption.classList.add('show');
+}
+}
+
+window.addEventListener('resize',()=>{
+const elapsed=(performance.now()-startTime)/1000;
+resize();
+ctx.clearRect(0,0,W,H);
+const visible=Math.min(points.length,Math.floor(elapsed*19));
+ctx.textAlign='center';
+ctx.textBaseline='middle';
+
+for(let i=0;i<visible;i++){
+const p=points[i];
+ctx.font=`${i%7===0?600:500} ${W<380?9.3:10.5}px system-ui,sans-serif`;
+ctx.fillStyle=['#ff6b78','#ff9b65','#ffd0d7','#e94864'][i%4];
+ctx.shadowColor='#ff244e';
+ctx.shadowBlur=4;
+ctx.fillText(phrases[i%phrases.length],p.x,p.y,W<380?82:98);
+}
+ctx.shadowBlur=0;
+if(visible>=points.length)caption.classList.add('show');
+});
+
+resize();
+})();
+</script>
+</body>
+</html>
